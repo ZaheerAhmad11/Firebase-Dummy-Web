@@ -2,7 +2,7 @@ import Navbar from "../components/Navbar";
 import "./globals.css";
 
 export const metadata = {
-  title: "Dummy FastFood",
+  title: "Corner FastFood",
   description: "Next.js Firebase CRUD",
 };
 
