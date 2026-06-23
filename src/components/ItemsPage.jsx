@@ -1,3 +1,4 @@
+// src/components/ItemsPage.jsx 
 "use client";
 import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
@@ -42,7 +43,7 @@ const ItemsPage = () => {
     }
 
     return (
-        <div className="max-w-6xl mx-auto py-10">
+        <div className="">
             {Object.entries(groupedFoods).map(([cat, items]) => (
                 <div key={cat} className="mb-10">
                     <h2 className="text-2xl font-bold text-neutral-700 mb-4 border-b pb-2">
@@ -50,7 +51,7 @@ const ItemsPage = () => {
                     </h2>
                     <div className="grid md:grid-cols-3 gap-5">
                         {items.map((food) => (
-                            <div key={food.id} className="bg-white shadow-md rounded-xl p-5">
+                            <div key={food.id} className="bg-white overflow-hidden shadow-md hover:shadow-xl rounded-xl p-5 transition">
                                 {food.imageUrl ? (
                                     <img
                                         src={food.imageUrl}
