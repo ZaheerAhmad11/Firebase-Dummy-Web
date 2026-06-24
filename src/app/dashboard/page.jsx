@@ -1,5 +1,9 @@
 "use client";
 
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { isAdmin } from "@/lib/auth";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
@@ -14,6 +18,13 @@ import {
 import { db, storage } from "@/lib/firebase";
 
 export default function DashboardPage() {
+
+    //-------------------------
+    const router = useRouter();
+    const [loading, setLoading] = useState(true);
+    //-------------------------
+
+
     const [foods, setFoods] = useState([]);
     const [name, setName] = useState("");
     const [price, setPrice] = useState("");
@@ -38,6 +49,25 @@ export default function DashboardPage() {
         const list = querySnapshot.docs.map((d) => d.id); // doc ID is the category name
         setCategories(list.sort());
     };
+
+    //-------------------------
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                router.push("/");
+                return;
+            }
+            const admin = await isAdmin(user.uid);
+            if (!admin) {
+                router.push("/");
+                return;
+            }
+            setLoading(false);
+        });
+        return () => unsubscribe();
+    }, []);
+    //-------------------------
+
 
     useEffect(() => {
         fetchFoods();
@@ -85,51 +115,51 @@ export default function DashboardPage() {
         }
     };
 
- const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!category) {
-        alert("Please add or select a category first.");
-        return;
-    }
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!category) {
+            alert("Please add or select a category first.");
+            return;
+        }
 
-    let imageUrl = existingImageUrl;
+        let imageUrl = existingImageUrl;
 
-    // Isolate the upload so a Storage failure doesn't kill the whole save
-    if (image) {
+        // Isolate the upload so a Storage failure doesn't kill the whole save
+        if (image) {
+            try {
+                const imageRef = ref(storage, `foods/${Date.now()}-${image.name}`);
+                await uploadBytes(imageRef, image);
+                imageUrl = await getDownloadURL(imageRef);
+            } catch (uploadErr) {
+                console.error("Image upload failed:", uploadErr);
+                alert(
+                    "Image upload failed (likely because your Firebase project is still on the Spark plan — Storage needs Blaze). Saving the item without an image for now."
+                );
+                imageUrl = existingImageUrl; // fall back, don't block the rest of the save
+            }
+        }
+
         try {
-            const imageRef = ref(storage, `foods/${Date.now()}-${image.name}`);
-            await uploadBytes(imageRef, image);
-            imageUrl = await getDownloadURL(imageRef);
-        } catch (uploadErr) {
-            console.error("Image upload failed:", uploadErr);
-            alert(
-                "Image upload failed (likely because your Firebase project is still on the Spark plan — Storage needs Blaze). Saving the item without an image for now."
-            );
-            imageUrl = existingImageUrl; // fall back, don't block the rest of the save
+            const priceNumber = Number(price) || 0; // ⬅️ store as number, not string
+
+            if (editingId) {
+                const foodRef = doc(db, "foods", editingId);
+                await updateDoc(foodRef, { name, price: priceNumber, category, imageUrl });
+                setEditingId(null);
+            } else {
+                await addDoc(collection(db, "foods"), { name, price: priceNumber, category, imageUrl });
+            }
+
+            setName("");
+            setPrice("");
+            setImage(null);
+            setExistingImageUrl("");
+            await fetchFoods();
+        } catch (err) {
+            console.error("Failed to save food:", err);
+            alert("Couldn't save this item — check the console for details.");
         }
-    }
-
-    try {
-        const priceNumber = Number(price) || 0; // ⬅️ store as number, not string
-
-        if (editingId) {
-            const foodRef = doc(db, "foods", editingId);
-            await updateDoc(foodRef, { name, price: priceNumber, category, imageUrl });
-            setEditingId(null);
-        } else {
-            await addDoc(collection(db, "foods"), { name, price: priceNumber, category, imageUrl });
-        }
-
-        setName("");
-        setPrice("");
-        setImage(null);
-        setExistingImageUrl("");
-        await fetchFoods();
-    } catch (err) {
-        console.error("Failed to save food:", err);
-        alert("Couldn't save this item — check the console for details.");
-    }
-};
+    };
     const handleDelete = async (id) => {
         await deleteDoc(doc(db, "foods", id));
         fetchFoods();
@@ -150,6 +180,7 @@ export default function DashboardPage() {
         return acc;
     }, {});
 
+    if (loading) return <p>Loading...</p>;
     return (
         <div className="max-w-6xl mx-auto py-6">
             <div className="bg-white max-w-6xl shadow-lg rounded-xl p-6">
@@ -181,7 +212,7 @@ export default function DashboardPage() {
                     </select>
 
                     <input
-                        type="text"
+                        type="number"
                         placeholder="Price"
                         value={price}
                         onChange={(e) => setPrice(e.target.value)}

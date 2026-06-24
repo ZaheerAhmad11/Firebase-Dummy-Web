@@ -1,4 +1,4 @@
-// src/lib/auth 
+// src/lib/auth
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -6,8 +6,15 @@ import {
   sendPasswordResetEmail,
 } from "firebase/auth";
 
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
+
+export const isAdmin = async (uid) => {
+  const userRef = doc(db, "users", uid);
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) return false;
+  return snap.data().role === "admin";
+};
 
 // SIGNUP
 export const signupUser = async (name, email, password) => {
@@ -16,15 +23,8 @@ export const signupUser = async (name, email, password) => {
     email,
     password,
   );
-
   const user = userCredential.user;
-
-  await setDoc(doc(db, "users", user.uid), {
-    name,
-    email,
-    role: "user",
-  });
-
+  await setDoc(doc(db, "users", user.uid), { name, email, role: "user" });
   return user;
 };
 

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { loginUser } from "@/lib/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+
+
 export default function LoginForm({ setView, onClose }) {
 
     const router = useRouter();
@@ -48,6 +50,7 @@ export default function LoginForm({ setView, onClose }) {
             </h2>
             <input
                 type="email"
+                autoComplete="new-password"
                 placeholder="Email"
                 className="w-full border p-3 rounded-lg mb-4"
                 value={email}
@@ -56,6 +59,7 @@ export default function LoginForm({ setView, onClose }) {
                 } />
             <input
                 type="password"
+                autoComplete="new-password"
                 placeholder="Password"
                 className="w-full border p-3 rounded-lg mb-4"
                 value={password}
