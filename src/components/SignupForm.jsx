@@ -15,9 +15,14 @@ export default function SignupForm({ setView, onClose }) {
             alert("Account created");
             onClose();
         } catch (error) {
-            console.error(error); alert("Signup failed");
-        } finally {
-            setLoading(false);
+            console.error(error);
+            if (error.code === "auth/invalid-credential") {
+                alert("Incorrect email or password.");
+            } else if (error.code === "auth/too-many-requests") {
+                alert("Too many failed attempts. Try again later.");
+            } else {
+                alert(`Login failed: ${error.code}`);
+            }
         }
     };
 

@@ -18,6 +18,7 @@ export default function LoginForm({ setView, onClose }) {
             setLoading(true);
             const user = await loginUser(email, password);
             console.log("LOGIN SUCCESS:", user);
+            setEmail(''); setPassword('')
             const userRef = doc(db, "users", user.uid);
             const userSnap = await getDoc(userRef);
             if (userSnap.exists()) {
@@ -29,11 +30,15 @@ export default function LoginForm({ setView, onClose }) {
             onClose();
         } catch (error) {
             console.error(error);
-            alert("Login failed");
-        } finally {
-            setLoading(false);
+            if (error.code === "auth/invalid-credential") {
+                alert("Incorrect email or password.");
+            } else if (error.code === "auth/too-many-requests") {
+                alert("Too many failed attempts. Try again later.");
+            } else {
+                alert(`Login failed: ${error.code}`);
+            }
         }
-    };
+    }
 
     return (
 
