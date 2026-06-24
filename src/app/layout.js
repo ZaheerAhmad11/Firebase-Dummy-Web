@@ -2,7 +2,10 @@ import Navbar from "../components/Navbar";
 import "./globals.css";
 
 export const metadata = {
-  title: "Corner FastFood",
+    icons: {
+    icon: './favicon2.png',
+  },
+  title: "Crown Chicken",
   description: "Next.js Firebase CRUD",
 };
 

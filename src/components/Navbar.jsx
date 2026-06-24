@@ -1,6 +1,7 @@
 // src/components/Navbar.jsx
 'use client';
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import SearchBar from "./SearchBar";
 import AuthModal from "./AuthModal";
@@ -18,7 +19,14 @@ export default function Navbar() {
             href="/"
             className="text-xl font-bold flex items-center gap-2 whitespace-nowrap"
           >
-            🍗 Crown Chicken
+            <Image
+              src="/favicon2.png"
+              alt="Crown Chicken Logo"
+              width={40}
+              height={40}
+              className="object-contain rounded-md"
+            />
+             Crown Chicken
           </Link>
 
           {/* Search Bar */}
