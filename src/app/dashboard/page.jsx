@@ -19,12 +19,8 @@ import { db, storage } from "@/lib/firebase";
 
 export default function DashboardPage() {
 
-    //-------------------------
     const router = useRouter();
     const [loading, setLoading] = useState(true);
-    //-------------------------
-
-
     const [foods, setFoods] = useState([]);
     const [name, setName] = useState("");
     const [price, setPrice] = useState("");
@@ -50,29 +46,29 @@ export default function DashboardPage() {
         setCategories(list.sort());
     };
 
-    //-------------------------
+    //Check Before Page Loading that admin or user
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            if (!user) {
+            try {
+                if (!user) {
+                    router.push("/");
+                    return;
+                }
+                const admin = await isAdmin(user.uid);
+                if (!admin) {
+                    router.push("/");
+                    return;
+                }
+                await fetchFoods();
+                await fetchCategories();
+                setLoading(false);
+            } catch (error) {
+                console.error(error);
                 router.push("/");
-                return;
             }
-            const admin = await isAdmin(user.uid);
-            if (!admin) {
-                router.push("/");
-                return;
-            }
-            setLoading(false);
         });
         return () => unsubscribe();
-    }, []);
-    //-------------------------
-
-
-    useEffect(() => {
-        fetchFoods();
-        fetchCategories();
-    }, []);
+    }, [router]);
 
     // ⬅️ NEW: auto-select first category once categories load
     useEffect(() => {
@@ -162,7 +158,7 @@ export default function DashboardPage() {
     };
     const handleDelete = async (id) => {
         await deleteDoc(doc(db, "foods", id));
-        fetchFoods();
+        await fetchFoods();
     };
 
     const handleEdit = (food) => {
