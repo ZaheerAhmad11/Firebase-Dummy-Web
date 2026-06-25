@@ -70,7 +70,7 @@ const ItemsPage = () => {
     }
 
     return (
-        <div className="max-w-7xl py-8">
+        <div className="max-w-7xl py-8 h-screen px-4 overflow-y-auto">
             {/* Header */}
             <div className="mb-8">
                 <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
@@ -112,7 +112,7 @@ const ItemsPage = () => {
 
             {/* Menu Grid */}
             {Object.entries(filteredGroupedFoods).map(([cat, items]) => (
-                <div key={cat} className="mb-12">
+                <div key={cat} className="mb-12 ">
                     <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                         <span className="bg-linear-to-r from-orange-500 to-red-500 text-transparent bg-clip-text">
                             {cat}
@@ -121,11 +121,12 @@ const ItemsPage = () => {
                             {items.length}
                         </span>
                     </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-6 xl:grid-cols-4 gap-5">
                         {items.map((food) => (
+                            /*--- Cards Section ---*/
                             <div 
                                 key={food.id} 
-                                className="group bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
+                                className="group lg:w-75 bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
                             >
                                 <div className="relative h-52 bg-linear-to-br from-gray-50 to-gray-100 overflow-hidden">
                                     {food.imageUrl ? (
@@ -143,7 +144,7 @@ const ItemsPage = () => {
                                     {food.price && (
                                         <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md">
                                             <span className="text-sm font-bold text-gray-800">
-                                                ${Number(food.price).toFixed(2)}
+                                                £{Number(food.price).toFixed(2)}
                                             </span>
                                         </div>
                                     )}
