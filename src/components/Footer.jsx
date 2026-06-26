@@ -33,7 +33,7 @@ const Footer = () => {
                                 height={40}
                                 className="object-contain rounded-md"
                             />
-                        <h2 className="text-2xl font-bold mb-4">
+                        <h2 className="text-2xl font-bold text-center">
                             Crown <span className="text-orange-500">Chicken</span>
                         </h2>
                         </Link>

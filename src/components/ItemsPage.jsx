@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Loader2, Image as ImageIcon, Utensils } from "lucide-react";
+import DummyPage from "./DummyPage";
 
 const ItemsPage = () => {
     const [foods, setFoods] = useState([]);
@@ -36,9 +37,9 @@ const ItemsPage = () => {
     }, {});
 
     const categories = ["All", ...Object.keys(groupedFoods).sort()];
-    
-    const filteredFoods = selectedCategory === "All" 
-        ? foods 
+
+    const filteredFoods = selectedCategory === "All"
+        ? foods
         : foods.filter(food => (food.category || "Uncategorized") === selectedCategory);
 
     const filteredGroupedFoods = filteredFoods.reduce((acc, food) => {
@@ -70,10 +71,10 @@ const ItemsPage = () => {
     }
 
     return (
-        <div className="max-w-7xl py-8 h-screen px-4 overflow-y-auto">
+        <div className="w-full max-w-auto p-4 sm:p-6 lg:p-10 h-screen overflow-y-auto">
             {/* Header */}
             <div className="mb-8">
-                <h1 className="text-4xl font-bold text-gray-800 flex items-center gap-3">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 flex items-center gap-3 flex-wrap">
                     <span className="bg-linear-to-r from-orange-500 to-red-500 text-transparent bg-clip-text">
                         Our Menu
                     </span>
@@ -92,11 +93,10 @@ const ItemsPage = () => {
                             <button
                                 key={cat}
                                 onClick={() => setSelectedCategory(cat)}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                                    selectedCategory === cat
-                                        ? "bg-linear-to-r from-orange-500 to-red-500 text-white shadow-md"
-                                        : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-                                }`}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${selectedCategory === cat
+                                    ? "bg-linear-to-r from-orange-500 to-red-500 text-white shadow-md"
+                                    : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                                    }`}
                             >
                                 {cat}
                                 {cat !== "All" && (
@@ -112,8 +112,8 @@ const ItemsPage = () => {
 
             {/* Menu Grid */}
             {Object.entries(filteredGroupedFoods).map(([cat, items]) => (
-                <div key={cat} className="mb-12 ">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <div key={cat} className="mb-10">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                         <span className="bg-linear-to-r from-orange-500 to-red-500 text-transparent bg-clip-text">
                             {cat}
                         </span>
@@ -121,14 +121,14 @@ const ItemsPage = () => {
                             {items.length}
                         </span>
                     </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-6 xl:grid-cols-4 gap-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                         {items.map((food) => (
                             /*--- Cards Section ---*/
-                            <div 
-                                key={food.id} 
-                                className="group lg:w-75 bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
+                            <div
+                                key={food.id}
+                                className="group w-full bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
                             >
-                                <div className="relative h-52 bg-linear-to-br from-gray-50 to-gray-100 overflow-hidden">
+                                <div className="relative h-48 sm:h-52 bg-linear-to-br from-gray-50 to-gray-100 overflow-hidden">
                                     {food.imageUrl ? (
                                         <img
                                             src={food.imageUrl}
@@ -178,6 +178,7 @@ const ItemsPage = () => {
                     <p className="text-gray-500">Try selecting a different category</p>
                 </div>
             )}
+            {/* <DummyPage /> */}
         </div>
     );
 };
