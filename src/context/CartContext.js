@@ -6,13 +6,31 @@ import { onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "@/lib/firebase";
 
 const CartContext = createContext();
+const LOCAL_CART_KEY = "guest_cart";
 
+// ── localStorage helpers ──────────────────────────────────────────
+function readLocalCart() {
+  try {
+    const raw = localStorage.getItem(LOCAL_CART_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeLocalCart(items) {
+  try {
+    localStorage.setItem(LOCAL_CART_KEY, JSON.stringify(items));
+  } catch {}
+}
+
+// ─────────────────────────────────────────────────────────────────
 export function CartProvider({ children }) {
-  const [uid, setUid] = useState(null);
+  const [uid, setUid] = useState(null);          // null = guest
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // current uid pakdo (anonymous ya logged-in, dono)
+  // Track auth state
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       setUid(user ? user.uid : null);
@@ -20,9 +38,16 @@ export function CartProvider({ children }) {
     return () => unsub();
   }, []);
 
-  // cart doc ko real-time listen karo
+  // ── Sync cart based on login state ──────────────────────────────
   useEffect(() => {
-    if (!uid) return;
+    if (uid === null) {
+      // Guest — load from localStorage immediately
+      setItems(readLocalCart());
+      setLoading(false);
+      return;
+    }
+
+    // Logged-in — listen to Firestore
     const cartRef = doc(db, "carts", uid);
     const unsub = onSnapshot(cartRef, (snap) => {
       setItems(snap.exists() ? snap.data().items || [] : []);
@@ -31,12 +56,30 @@ export function CartProvider({ children }) {
     return () => unsub();
   }, [uid]);
 
+  // ── addToCart ───────────────────────────────────────────────────
   const addToCart = useCallback(async (food, qty = 1) => {
-    if (!uid) return;
-    const cartRef = doc(db, "carts", uid);
-    await runTransaction(db, async (tx) => {
-      const snap = await tx.get(cartRef);
-      const current = snap.exists() ? snap.data().items || [] : [];
+    if (uid) {
+      // Firestore path
+      const cartRef = doc(db, "carts", uid);
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(cartRef);
+        const current = snap.exists() ? snap.data().items || [] : [];
+        const idx = current.findIndex((i) => i.foodId === food.id);
+        let updated;
+        if (idx > -1) {
+          updated = [...current];
+          updated[idx] = { ...updated[idx], qty: updated[idx].qty + qty };
+        } else {
+          updated = [
+            ...current,
+            { foodId: food.id, name: food.name, price: Number(food.price), imageUrl: food.imageUrl || null, qty },
+          ];
+        }
+        tx.set(cartRef, { items: updated, updatedAt: serverTimestamp() });
+      });
+    } else {
+      // localStorage path
+      const current = readLocalCart();
       const idx = current.findIndex((i) => i.foodId === food.id);
       let updated;
       if (idx > -1) {
@@ -45,40 +88,56 @@ export function CartProvider({ children }) {
       } else {
         updated = [
           ...current,
-          { foodId: food.id, name: food.name, price: Number(food.price), image: food.image || null, qty },
+          { foodId: food.id, name: food.name, price: Number(food.price), imageUrl: food.imageUrl || null, qty },
         ];
       }
-      tx.set(cartRef, { items: updated, updatedAt: serverTimestamp() });
-    });
+      writeLocalCart(updated);
+      setItems(updated);
+    }
+    return true;
   }, [uid]);
 
+  // ── updateQty ───────────────────────────────────────────────────
   const updateQty = useCallback(async (foodId, qty) => {
-    if (!uid) return;
-    const cartRef = doc(db, "carts", uid);
-    await runTransaction(db, async (tx) => {
-      const snap = await tx.get(cartRef);
-      const current = snap.exists() ? snap.data().items || [] : [];
+    if (uid) {
+      const cartRef = doc(db, "carts", uid);
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(cartRef);
+        const current = snap.exists() ? snap.data().items || [] : [];
+        const updated = qty <= 0
+          ? current.filter((i) => i.foodId !== foodId)
+          : current.map((i) => (i.foodId === foodId ? { ...i, qty } : i));
+        tx.set(cartRef, { items: updated, updatedAt: serverTimestamp() });
+      });
+    } else {
+      const current = readLocalCart();
       const updated = qty <= 0
         ? current.filter((i) => i.foodId !== foodId)
         : current.map((i) => (i.foodId === foodId ? { ...i, qty } : i));
-      tx.set(cartRef, { items: updated, updatedAt: serverTimestamp() });
-    });
+      writeLocalCart(updated);
+      setItems(updated);
+    }
   }, [uid]);
 
   const removeFromCart = useCallback((foodId) => updateQty(foodId, 0), [updateQty]);
 
+  // ── clearCart ───────────────────────────────────────────────────
   const clearCart = useCallback(async () => {
-    if (!uid) return;
-    await runTransaction(db, async (tx) => {
-      tx.set(doc(db, "carts", uid), { items: [], updatedAt: serverTimestamp() });
-    });
+    if (uid) {
+      await runTransaction(db, async (tx) => {
+        tx.set(doc(db, "carts", uid), { items: [], updatedAt: serverTimestamp() });
+      });
+    } else {
+      writeLocalCart([]);
+      setItems([]);
+    }
   }, [uid]);
 
   const cartCount = items.reduce((sum, i) => sum + i.qty, 0);
   const cartTotal = items.reduce((sum, i) => sum + i.qty * i.price, 0);
 
   return (
-    <CartContext.Provider value={{ items, loading, addToCart, updateQty, removeFromCart, clearCart, cartCount, cartTotal }}>
+    <CartContext.Provider value={{ uid, items, loading, addToCart, updateQty, removeFromCart, clearCart, cartCount, cartTotal }}>
       {children}
     </CartContext.Provider>
   );

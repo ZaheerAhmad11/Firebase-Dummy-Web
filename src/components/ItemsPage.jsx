@@ -2,13 +2,23 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Loader2, Image as ImageIcon, Utensils } from "lucide-react";
-import DummyPage from "./DummyPage";
+import { Loader2, Image as ImageIcon, Utensils, ShoppingCart } from "lucide-react";
+import { useCart } from "@/context/CartContext";
 
 const ItemsPage = () => {
     const [foods, setFoods] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState("All");
+    const [addedIds, setAddedIds] = useState({});
+    const { addToCart } = useCart();
+
+    const handleAddToCart = async (food) => {
+        await addToCart(food, 1);
+        setAddedIds((prev) => ({ ...prev, [food.id]: true }));
+        setTimeout(() => {
+            setAddedIds((prev) => ({ ...prev, [food.id]: false }));
+        }, 1500);
+    };
 
     useEffect(() => {
         const fetchFoods = async () => {
@@ -135,6 +145,7 @@ const ItemsPage = () => {
                                             alt={food.name}
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                         />
+
                                     ) : (
                                         <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
                                             <ImageIcon className="w-12 h-12 mb-2" />
@@ -147,6 +158,7 @@ const ItemsPage = () => {
                                                 £{Number(food.price).toFixed(2)}
                                             </span>
                                         </div>
+
                                     )}
                                 </div>
                                 <div className="p-4">
@@ -164,6 +176,19 @@ const ItemsPage = () => {
                                             {food.category || "Uncategorized"}
                                         </span>
                                     </div>
+                                <div className="pt-2">
+                                    <button
+                                        onClick={() => handleAddToCart(food)}
+                                        className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                                            addedIds[food.id]
+                                                ? "bg-green-500 text-white scale-95"
+                                                : "bg-orange-500 hover:bg-orange-600 text-white"
+                                        }`}
+                                    >
+                                        <ShoppingCart className="w-4 h-4" />
+                                        {addedIds[food.id] ? "Added!" : "Add to Cart"}
+                                    </button>
+                                </div>
                                 </div>
                             </div>
                         ))}
@@ -178,7 +203,6 @@ const ItemsPage = () => {
                     <p className="text-gray-500">Try selecting a different category</p>
                 </div>
             )}
-            {/* <DummyPage /> */}
         </div>
     );
 };
