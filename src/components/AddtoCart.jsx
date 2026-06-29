@@ -1,5 +1,6 @@
 'use client';
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import {
   MdChevronRight,
@@ -19,6 +20,7 @@ const SERVICE_FEE = 1.5;
 
 const AddtoCart = () => {
   const { items, loading, uid, updateQty, removeFromCart, clearCart, cartTotal } = useCart();
+  const router = useRouter();
   const [deliveryMethod, setDeliveryMethod] = useState("delivery");
   const [discountCode, setDiscountCode] = useState("");
   const [discount, setDiscount] = useState(0);
@@ -247,7 +249,10 @@ const AddtoCart = () => {
                 </div>
               </div>
 
-              <button className="w-full mt-3 bg-black hover:bg-gray-800 text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 transition">
+              <button
+                onClick={() => router.push('/checkout')}
+                className="w-full mt-3 bg-black hover:bg-gray-800 text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 transition"
+              >
                 <span>Proceed to Checkout</span>
                 <MdChevronRight className="text-xl" />
               </button>
